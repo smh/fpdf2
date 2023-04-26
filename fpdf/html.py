@@ -377,9 +377,10 @@ class HTML2FPDF(HTMLParser):
             self.font_stack.append((self.font_face, self.font_size, self.font_color))
             self.heading_level = int(tag[1:])
             hsize = self.heading_sizes[tag]
-            self.pdf.set_text_color(150, 0, 0)
+            # self.pdf.set_text_color(150, 0, 0)
             self.pdf.ln(self.h + self.heading_above * hsize)  # more space above heading
             self.set_font(size=hsize)
+            self.set_style("b", True)
             if attrs:
                 self.align = attrs.get("align")
         if tag == "hr":
@@ -402,7 +403,7 @@ class HTML2FPDF(HTMLParser):
             self.indent += 1
             self.bullet.append(0)
         if tag == "li":
-            self.pdf.set_text_color(190, 0, 0)
+            # self.pdf.set_text_color(190, 0, 0)
             self.pdf.ln(self.h + px2scale(2, self.pdf.k) / 72)
             bullet = self.bullet[self.indent - 1]
             if not isinstance(bullet, str):
@@ -563,6 +564,7 @@ class HTML2FPDF(HTMLParser):
             # more space below heading:
             self.pdf.ln(self.h + self.h * self.heading_below)
             self.set_font(face, size)
+            self.set_style("b", False)
             self.set_text_color(*color)
             self.align = None
         if tag == "code":
