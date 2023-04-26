@@ -173,6 +173,10 @@ def px2mm(px):
     return px * 25.4 / 72
 
 
+def px2scale(px, scale_factor):
+    return px / scale_factor
+
+
 def color_as_decimal(color="#000000"):
     if not color:
         return None
@@ -241,8 +245,12 @@ class HTML2FPDF(HTMLParser):
         self.font_color = 0, 0, 0  # initialize font color, r,g,b format
         self.heading_level = None
         self.heading_sizes = dict(**DEFAULT_HEADING_SIZES)
-        self.heading_above = 0.2  # extra space above heading, relative to font size
-        self.heading_below = 0.2  # extra space below heading, relative to font size
+        self.heading_above = (
+            px2scale(0.2, self.pdf.k) / 72
+        )  # extra space above heading, relative to font size
+        self.heading_below = (
+            px2scale(0.2, self.pdf.k) / 72
+        )  # extra space below heading, relative to font size
         if heading_sizes:
             self.heading_sizes.update(heading_sizes)
         self.pre_code_font = pre_code_font
@@ -363,7 +371,7 @@ class HTML2FPDF(HTMLParser):
                 self.align = attrs.get("align")
             if "line-height" in attrs:
                 line_height = float(attrs.get("line-height"))
-                self.h = px2mm(self.font_size) * line_height
+                self.h = px2scale(self.font_size * line_height, self.pdf.k)
         if tag in self.heading_sizes:
             self.font_stack.append((self.font_face, self.font_size, self.font_color))
             self.heading_level = int(tag[1:])
@@ -393,8 +401,8 @@ class HTML2FPDF(HTMLParser):
             self.indent += 1
             self.bullet.append(0)
         if tag == "li":
-            self.pdf.ln(self.h + 2)
             self.pdf.set_text_color(190, 0, 0)
+            self.pdf.ln(self.h + px2scale(2, self.pdf.k) / 72)
             bullet = self.bullet[self.indent - 1]
             if not isinstance(bullet, str):
                 bullet += 1
@@ -425,7 +433,7 @@ class HTML2FPDF(HTMLParser):
                 if width[-1] == "%":
                     width = self.pdf.epw * int(width[:-1]) / 100
                 else:
-                    width = px2mm(int(width))
+                    width = px2scale(int(width), self.pdf.k)
             if "border" in attrs:
                 borders_layout = (
                     "ALL" if self.table_line_separators else "NO_HORIZONTAL_LINES"
@@ -485,8 +493,8 @@ class HTML2FPDF(HTMLParser):
                         tag,
                     )
         if tag == "img" and "src" in attrs:
-            width = px2mm(int(attrs.get("width", 0)))
-            height = px2mm(int(attrs.get("height", 0)))
+            width = px2scale(int(attrs.get("width", 0)), self.pdf.k)
+            height = px2scale(int(attrs.get("height", 0)), self.pdf.k)
             if self.table_row:  # => <img> in a <table>
                 if width or height:
                     LOGGER.warning(
@@ -580,7 +588,7 @@ class HTML2FPDF(HTMLParser):
         if tag == "p":
             self.pdf.ln(self.h)
             self.align = ""
-            self.h = px2mm(self.font_size)
+            self.h = px2scale(self.font_size, self.pdf.k)
         if tag in ("ul", "ol"):
             self.indent -= 1
             self.bullet.pop()
@@ -627,7 +635,7 @@ class HTML2FPDF(HTMLParser):
             self.font_face = face
         if size:
             self.font_size = size
-            self.h = px2mm(size)
+            self.h = px2scale(size, self.pdf.k)
             LOGGER.debug("H %s", self.h)
         style = "".join(s for s in ("b", "i", "u") if self.style.get(s)).upper()
         if (self.font_face, style) != (self.pdf.font_family, self.pdf.font_style):
