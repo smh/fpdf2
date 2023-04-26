@@ -169,8 +169,8 @@ COLOR_DICT = {
 }
 
 
-def px2mm(px):
-    return px * 25.4 / 72
+def px2scale(px, scale_factor):
+    return px / scale_factor
 
 
 def px2scale(px, scale_factor):
