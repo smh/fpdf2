@@ -263,6 +263,7 @@ class HTML2FPDF(HTMLParser):
         self.tr = None  # becomes a dict of attributes when processing <tr> tags
         self.td_th = None  # becomes a dict of attributes when processing <td>/<th> tags
         # "inserted" is a special attribute indicating that a cell has be inserted in self.table_row
+        self.margin_stack = []
 
     def handle_data(self, data):
         trailing_space_flag = TRAILING_SPACE.search(data)
@@ -409,6 +410,8 @@ class HTML2FPDF(HTMLParser):
                 self.bullet[self.indent - 1] = bullet
                 bullet = f"{bullet}. "
             self.pdf.write(self.h, f"{' ' * self.li_tag_indent * self.indent}{bullet} ")
+            self.margin_stack.append(self.pdf.l_margin)
+            self.pdf.set_left_margin(self.pdf.get_x())
             self.set_text_color(*self.font_color)
         if tag == "font":
             # save previous font state:
@@ -589,7 +592,10 @@ class HTML2FPDF(HTMLParser):
             self.pdf.ln(self.h)
             self.align = ""
             self.h = px2scale(self.font_size, self.pdf.k)
+        if tag == "li":
+            self.pdf.set_left_margin(self.margin_stack.pop())
         if tag in ("ul", "ol"):
+            self.pdf.ln(self.h)
             self.indent -= 1
             self.bullet.pop()
         if tag == "table":
